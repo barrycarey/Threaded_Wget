@@ -32,11 +32,20 @@ class ThreadedWget():
             time.sleep(5)
             sys.exit()
 
+        if not output_dir:
+            print('[!] No output directory given.  CWD will be used. ')
+            response = input('[?] Do You Wish To Proceed? (y/n)')
+            if response.lower() == 'n' or response.lower() == 'no':
+                print('[!] Please use --output to specify output directory')
+                time.sleep(4)
+                sys.exit()
+            else:
+                self.output_dir = os.getcwd()
+
         self.download_url = dl_url
         self.cutdirs = cutdirs
         self.verbose = verbose
         self.threads = int(threads)
-        self.output_dir = output_dir
 
         # Handle Wget Flags
         if not mirror:
@@ -210,7 +219,8 @@ def main():
                                                  "and download all files. ")
 
     parser.add_argument("dl_url", help="This is the URL to download")
-    parser.add_argument("output_dir", help="The directory to place the downloaded files")
+    #parser.add_argument("output_dir", help="The directory to place the downloaded files")
+    parser.add_argument("--output", "-o", default=False, dest="output_dir")
     parser.add_argument("cutdirs", help="Passthrough for Wget's custdirs command line flag")
     parser.add_argument("threads", help="The number of download threads to run at once.")
     parser.add_argument("--verbose", action='store_true', help="Prints a more verbose output", default=False, dest="verbose")
@@ -218,6 +228,7 @@ def main():
     parser.add_argument("--no_parent", action="store_true", default=False, dest="no_parent")
     parser.add_argument("--no_host_directories", action="store_true", default=False, dest="no_host_directories")
     args = parser.parse_args()
+
 
     downloader = ThreadedWget(args.dl_url, args.output_dir, cutdirs=args.cutdirs, threads=args.threads,
                               verbose=args.verbose, mirror=args.mirror, no_parent=args.no_parent,
