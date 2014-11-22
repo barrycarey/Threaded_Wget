@@ -7,10 +7,10 @@ import threading
 from bs4 import BeautifulSoup
 import urllib.request
 
-# TODO Add mirror flag
-# TODO Add other wget flags
 # TODO Cleanup handling of slashes
 # TODO Add more crap
+# TODO If not output dir is use CWD
+
 class ThreadedWget():
     def __init__(self, dl_url, output_dir, cutdirs=0, mirror=False, verbose=False, threads=15):
 
@@ -22,12 +22,14 @@ class ThreadedWget():
 
         self.download_url = dl_url
         self.cutdirs = cutdirs
-        self.mirror = mirror
-        self.verbose = False
+        self.verbose = verbose
         self.threads = int(threads)
         self.output_dir = output_dir
 
-        print(os.getcwd())
+        if not mirror:
+            self.mirror = ''
+        else:
+            self.mirror = '--mirror'
 
 
     def run(self):
@@ -138,9 +140,11 @@ class ThreadedWget():
                 url += '/'
 
             if self.verbose:
-                print('Calling parse_remote_dir_tree with URL: ' + url + folder)
+                print('[+] Calling parse_remote_dir_tree with URL: ' + url + folder)
 
-            self.parse_remote_dir_tree(url + folder, folder, path=path, previous=dir)
+            next_url = url + folder
+
+            self.parse_remote_dir_tree(next_url, folder, path=path, previous=dir)
 
     def _threaded_download(self, download_url, output_file):
         """
@@ -155,12 +159,13 @@ class ThreadedWget():
         if not os.path.exists(os.path.dirname(self.output_dir + output_file)):
             os.makedirs(os.path.dirname(self.output_dir + output_file))
 
-        wget_call = r'util\wget.exe %s --reject "index.html*" --quiet --mirror --no-parent ' \
+        wget_call = r'util\wget.exe %s --reject "index.html*" --quiet %s --no-parent ' \
                     r'--no-host-directories --cut-dirs=%s --directory-prefix=%s --output-file=download.txt' % (
-                    download_url, self.cutdirs, self.output_dir)
+                    download_url, self.mirror, self.cutdirs, self.output_dir)
 
         if self.verbose:
             print('Downloading File: ', output_file)
+            print(wget_call)
 
         # subprocess.DEVNULL is used to null output from Popen call
         run = subprocess.Popen(wget_call, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
