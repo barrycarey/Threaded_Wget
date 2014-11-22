@@ -6,18 +6,31 @@ import time
 import threading
 from bs4 import BeautifulSoup
 import urllib.request
+import urllib.error
 
 # TODO Cleanup handling of slashes
-# TODO Add more crap
 # TODO If not output dir is use CWD
+# TODO Add a queue for files to download.  This way while waiting on max threads the download list can continue to build
 
 class ThreadedWget():
-    def __init__(self, dl_url, output_dir, cutdirs=0, mirror=False, verbose=False, threads=15):
+    def __init__(self, dl_url, output_dir, cutdirs=0, threads=15, mirror=False, verbose=False, no_parent=False,
+                 no_host_directories=False):
 
         self.win_clear_screen()
 
         if not os.path.isfile('wget.exe') and not os.path.isfile('util\wget.exe'):
             print('ERROR: Cannot locate wget.exe.  Ensure it exists in CWD or in util folder under CWD')
+            sys.exit()
+
+        # Validate The Initial URL
+        try:
+            urllib.request.urlopen(dl_url)
+        except urllib.error.HTTPError as e:
+            print('[x] ERROR: Failed to open URL: ', dl_url)
+            print('[x] Error Code: ', e.code)
+            print('[x] Error Msg: ', e.reason)
+            print('\n[x] Please Check URL And Try Again')
+            time.sleep(5)
             sys.exit()
 
         self.download_url = dl_url
@@ -26,10 +39,21 @@ class ThreadedWget():
         self.threads = int(threads)
         self.output_dir = output_dir
 
+        # Handle Wget Flags
         if not mirror:
             self.mirror = ''
         else:
             self.mirror = '--mirror'
+
+        if not no_parent:
+            self.no_parent = ''
+        else:
+            self.no_parent = '--no-parent'
+
+        if not no_host_directories:
+            self.no_host_directories = ''
+        else:
+            self.no_host_directories = '--no-host-directories'
 
 
     def run(self):
@@ -85,8 +109,10 @@ class ThreadedWget():
         # TODO Cleanup Exception Handling
         try:
             response = urllib.request.urlopen(url)
-        except:
-            print('Failed to open URL: ', url)
+        except urllib.error.HTTPError as e:
+            print('[x] ERROR: Failed to open URL: ', url)
+            print('[x] Error Code: ', e.code)
+            print('[x] Error Msg: ', e.reason)
             return
 
         parsed_page = BeautifulSoup(response)
@@ -159,9 +185,9 @@ class ThreadedWget():
         if not os.path.exists(os.path.dirname(self.output_dir + output_file)):
             os.makedirs(os.path.dirname(self.output_dir + output_file))
 
-        wget_call = r'util\wget.exe %s --reject "index.html*" --quiet %s --no-parent ' \
-                    r'--no-host-directories --cut-dirs=%s --directory-prefix=%s --output-file=download.txt' % (
-                    download_url, self.mirror, self.cutdirs, self.output_dir)
+        wget_call = r'util\wget.exe %s --reject "index.html*" --quiet %s %s ' \
+                    r'%s --cut-dirs=%s --directory-prefix=%s --output-file=download.txt' % (
+                    download_url, self.mirror, self.no_parent, self.no_host_directories, self.cutdirs, self.output_dir)
 
         if self.verbose:
             print('Downloading File: ', output_file)
@@ -190,10 +216,13 @@ def main():
     parser.add_argument("threads", help="The number of download threads to run at once.")
     parser.add_argument("--verbose", action='store_true', help="Prints a more verbose output", default=False, dest="verbose")
     parser.add_argument("--mirror", action='store_true', help="Enable/Disable Wget's mirror functionality", default=False, dest="mirror")
+    parser.add_argument("--no_parent", action="store_true", default=False, dest="no_parent")
+    parser.add_argument("--no_host_directories", action="store_true", default=False, dest="no_host_directories")
     args = parser.parse_args()
 
-    downloader = ThreadedWget(args.dl_url, args.output_dir, cutdirs=args.cutdirs, verbose=args.verbose,
-                              threads=args.threads, mirror=args.mirror)
+    downloader = ThreadedWget(args.dl_url, args.output_dir, cutdirs=args.cutdirs, threads=args.threads,
+                              verbose=args.verbose, mirror=args.mirror, no_parent=args.no_parent,
+                              no_host_directories=args.no_host_directories)
     downloader.run()
 
 
