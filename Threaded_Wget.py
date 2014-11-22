@@ -10,6 +10,7 @@ import urllib.request
 # TODO Add mirror flag
 # TODO Add other wget flags
 # TODO Cleanup handling of slashes
+# TODO Add more crap
 class ThreadedWget():
     def __init__(self, dl_url, output_dir, cutdirs=0, mirror=False, verbose=False, threads=15):
 
