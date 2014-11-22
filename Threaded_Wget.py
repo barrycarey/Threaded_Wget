@@ -25,9 +25,8 @@ class ThreadedWget():
         # Validate The Initial URL
         try:
             urllib.request.urlopen(dl_url)
-        except urllib.error.HTTPError as e:
+        except (urllib.error.HTTPError, urllib.error.URLError) as e:
             print('[x] ERROR: Failed to open URL: ', dl_url)
-            print('[x] Error Code: ', e.code)
             print('[x] Error Msg: ', e.reason)
             print('\n[x] Please Check URL And Try Again')
             time.sleep(5)
@@ -75,13 +74,15 @@ class ThreadedWget():
             if last_active != threading.active_count():
                 self.win_clear_screen()
                 print('---------- ACTIVE DOWNLOAD THREADS ----------')
-                print('The Following ', threading.active_count(), ' files are still downloading')
+                print('The Following ', threading.active_count() - 1, ' files are still downloading')
                 for thrd in threading.enumerate():
+                    if thrd.name.lower() == 'mainthread':
+                        continue
                     print('[+] ', thrd.name)
             last_active = threading.active_count()
             time.sleep(1)
 
-        print('Success: All Downloads Have Finished')
+        print('[!] Success: All Downloads Have Finished')
 
     def parse_remote_dir_tree(self, url, dir, path='', previous=None):
         """
@@ -96,22 +97,20 @@ class ThreadedWget():
         dirs = []
         files = []
 
-
         # Build up directory path
         # path = path + '/' + dir
 
-        # TODO This is mega hackis.  Revisit this
+        # TODO This is mega hackish.  Revisit
         if path == '/':
             path = path + dir
         else:
             path = path + '/' + dir
 
-        # TODO Cleanup Exception Handling
+        # TODO Cleanup Exception Handling.  Will throw urllib.error.URLError if DNS lookup fails
         try:
             response = urllib.request.urlopen(url)
-        except urllib.error.HTTPError as e:
+        except (urllib.error.HTTPError, urllib.error.URLError) as e:
             print('[x] ERROR: Failed to open URL: ', url)
-            print('[x] Error Code: ', e.code)
             print('[x] Error Msg: ', e.reason)
             return
 
@@ -139,7 +138,7 @@ class ThreadedWget():
             # Manage the amount of concurrent downloads. Don't start more download threads until below threshold
             while threading.active_count() > self.threads:
                 print('[x] Max download threads reached.  Waiting for threads to decrease')
-                time.sleep(0.5)
+                time.sleep(2)
 
             output_file = '/' + file
 
