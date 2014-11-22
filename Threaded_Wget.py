@@ -43,6 +43,8 @@ class ThreadedWget():
                 sys.exit()
             else:
                 self.output_dir = os.getcwd()
+        else:
+            self.output_dir = output_dir
 
         self.download_url = dl_url
         self.cutdirs = cutdirs
@@ -235,8 +237,10 @@ def main():
     downloader = ThreadedWget(args.dl_url, args.output_dir, cutdirs=args.cutdirs, threads=args.threads,
                               verbose=args.verbose, mirror=args.mirror, no_parent=args.no_parent,
                               no_host_directories=args.no_host_directories)
-    downloader.run()
-
+    try:
+        downloader.run()
+    except KeyboardInterrupt:
+        print('[!] Keyboard Quit Detected')
 
 if __name__ == '__main__':
     main()
