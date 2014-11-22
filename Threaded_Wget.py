@@ -38,6 +38,8 @@ class ThreadedWget():
         :return:
         """
 
+        print('[+] Starting Parse And Download Of ' + self.download_url + '\n')
+
         self.parse_remote_dir_tree(self.download_url, '')
 
         print('\nAll Download Threads Launched.\n')
@@ -49,7 +51,7 @@ class ThreadedWget():
                 print('---------- ACTIVE DOWNLOAD THREADS ----------')
                 print('The Following ', threading.active_count(), ' files are still downloading')
                 for thrd in threading.enumerate():
-                    print(thrd.name)
+                    print('[+] ', thrd.name)
             last_active = threading.active_count()
             time.sleep(1)
 
@@ -72,14 +74,11 @@ class ThreadedWget():
         # Build up directory path
         # path = path + '/' + dir
 
-        print('Path Before: ', path)
-        print('Dir: ', dir)
         # TODO This is mega hackis.  Revisit this
         if path == '/':
             path = path + dir
         else:
             path = path + '/' + dir
-        print('Path After: ', path)
 
         # TODO Cleanup Exception Handling
         try:
@@ -95,10 +94,10 @@ class ThreadedWget():
             # Avoid climbing back to previous level
             if link.string == '[To Parent Directory]':
                 if self.verbose:
-                    print('Skipping parent directory')
+                    print('[+] Skipping parent directory')
                 continue
 
-            # Get file name and extension.  If folder ext will be None
+            # Get file name and extension.  If directory ext will be None
             name, ext = os.path.splitext(link.string)
 
             if ext:
@@ -111,18 +110,15 @@ class ThreadedWget():
 
             # Manage the amount of concurrent downloads. Don't start more download threads until below threshold
             while threading.active_count() > self.threads:
-                print('Max download threads reached.  Waiting for threads to decrease')
+                print('[x] Max download threads reached.  Waiting for threads to decrease')
                 time.sleep(0.5)
 
-            # TODO This should not be hard coded
-            #output_file = path.replace('/arma', '') + '/' + file
             output_file = '/' + file
-            print('Output File: ', output_file)
 
             time.sleep(0.02)
             if self.verbose:
-                print('Starting new thread with download_url as: ' + download_url)
-                print('Starting new thread with output_file as: ' + output_file)
+                print('[+] Starting new thread with download_url as: ' + download_url)
+                print('[+] Starting new thread with output_file as: ' + output_file)
 
             t = threading.Thread(target=self._threaded_download, name=os.path.basename(output_file),
                                  args=(download_url, output_file,))
@@ -139,7 +135,7 @@ class ThreadedWget():
             # TODO Hackish?
             # Add trailing slash
             if url[-1:] != '/':
-                url = url + '/'
+                url += '/'
 
             if self.verbose:
                 print('Calling parse_remote_dir_tree with URL: ' + url + folder)
