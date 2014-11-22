@@ -12,7 +12,9 @@ import urllib.error
 # TODO If not output dir is use CWD
 # TODO Add a queue for files to download.  This way while waiting on max threads the download list can continue to build
 
+
 class ThreadedWget():
+
     def __init__(self, dl_url, output_dir, cutdirs=0, threads=15, mirror=False, verbose=False, no_parent=False,
                  no_host_directories=False):
 
@@ -220,9 +222,9 @@ def main():
 
     parser.add_argument("dl_url", help="This is the URL to download")
     #parser.add_argument("output_dir", help="The directory to place the downloaded files")
-    parser.add_argument("--output", "-o", default=False, dest="output_dir")
+    parser.add_argument("--output", default=False, dest="output_dir")
     parser.add_argument("cutdirs", help="Passthrough for Wget's custdirs command line flag")
-    parser.add_argument("threads", help="The number of download threads to run at once.")
+    parser.add_argument("--threads", default=15, dest="threads", help="The number of download threads to run at once.")
     parser.add_argument("--verbose", action='store_true', help="Prints a more verbose output", default=False, dest="verbose")
     parser.add_argument("--mirror", action='store_true', help="Enable/Disable Wget's mirror functionality", default=False, dest="mirror")
     parser.add_argument("--no_parent", action="store_true", default=False, dest="no_parent")
