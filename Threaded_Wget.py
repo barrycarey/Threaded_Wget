@@ -18,11 +18,22 @@ class ThreadedWget():
     def __init__(self, dl_url, output_dir, cutdirs=0, threads=15, mirror=False, verbose=False, no_parent=False,
                  no_host_directories=False):
 
+        self.download_url = dl_url
+        self.cutdirs = cutdirs
+        self.verbose = verbose
+        self.threads = int(threads)
+
         self.win_clear_screen()
 
-        if not os.path.isfile('wget.exe') and not os.path.isfile('util\wget.exe'):
-            print('ERROR: Cannot locate wget.exe.  Ensure it exists in CWD or in util folder under CWD')
-            sys.exit()
+        if os.name == 'nt':
+            self.host_os = 'windows'
+        elif os.name == 'posix':
+            self.host_os = 'posix'
+
+        if self.host_os == 'windows':
+            if not os.path.isfile('wget.exe') and not os.path.isfile('util\wget.exe'):
+                print('ERROR: Cannot locate wget.exe.  Ensure it exists in CWD or in util folder under CWD')
+                sys.exit()
 
         # Validate The Initial URL
         try:
@@ -45,11 +56,6 @@ class ThreadedWget():
                 self.output_dir = os.getcwd()
         else:
             self.output_dir = output_dir
-
-        self.download_url = dl_url
-        self.cutdirs = cutdirs
-        self.verbose = verbose
-        self.threads = int(threads)
 
         # Handle Wget Flags
         if not mirror:
@@ -197,9 +203,14 @@ class ThreadedWget():
         if not os.path.exists(os.path.dirname(self.output_dir + output_file)):
             os.makedirs(os.path.dirname(self.output_dir + output_file))
 
-        wget_call = r'util\wget.exe %s --reject "index.html*" --quiet %s %s ' \
-                    r'%s --cut-dirs=%s --directory-prefix=%s --output-file=download.txt' % (
-                    download_url, self.mirror, self.no_parent, self.no_host_directories, self.cutdirs, self.output_dir)
+        if self.host_os == 'windows':
+            wget_call = r'util\wget.exe %s --reject "index.html*" --quiet %s %s ' \
+                        r'%s --cut-dirs=%s --directory-prefix=%s --output-file=download.txt' % (
+                        download_url, self.mirror, self.no_parent, self.no_host_directories, self.cutdirs, self.output_dir)
+        elif self.host_os == 'posix':
+            wget_call = 'wget %s --reject "index.html*" --quiet %s %s ' \
+                        '%s --cut-dirs=%s --directory-prefix=%s --output-file=download.txt' % (
+                        download_url, self.mirror, self.no_parent, self.no_host_directories, self.cutdirs, self.output_dir)
 
         if self.verbose:
             print('Downloading File: ', output_file)
