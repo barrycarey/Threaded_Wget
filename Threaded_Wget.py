@@ -23,12 +23,12 @@ class ThreadedWget():
         self.verbose = verbose
         self.threads = int(threads)
 
-        self.win_clear_screen()
-
         if os.name == 'nt':
             self.host_os = 'windows'
         elif os.name == 'posix':
             self.host_os = 'posix'
+
+        self.clear_screen()
 
         if self.host_os == 'windows':
             if not os.path.isfile('wget.exe') and not os.path.isfile('util\wget.exe'):
@@ -91,7 +91,7 @@ class ThreadedWget():
         last_active = 0
         while threading.active_count() > 1:
             if last_active != threading.active_count():
-                self.win_clear_screen()
+                self.clear_screen()
                 print('---------- ACTIVE DOWNLOAD THREADS ----------')
                 print('The Following ', threading.active_count() - 1, ' files are still downloading')
                 for thrd in threading.enumerate():
@@ -225,8 +225,15 @@ class ThreadedWget():
             print('----- Thread Ending -----\n')
 
 
-    def win_clear_screen(self):
-        os.system('cls')
+    def clear_screen(self):
+        """
+        Clear the screen.  Issue the correct command for OS running this script
+        :return:
+        """
+        if self.host_os == 'windows':
+            os.system('cls')
+        elif self.host_os == 'posix':
+            os.system('clear')
 
 
 def main():
