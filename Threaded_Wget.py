@@ -9,10 +9,20 @@ import urllib.request
 import urllib.error
 
 # TODO Cleanup handling of slashes
-# TODO If not output dir is use CWD
 # TODO Add a queue for files to download.  This way while waiting on max threads the download list can continue to build
+# TODO Add option for pure urllib download to remove the wget requirement.
 
 
+"""
+A class to parse a directory listing of a URL and spawn a Wget download for each file encountered.
+The module uses Beautiful Soup to parse the URL and pull out all links.  The links are then checked
+to determine of they are files or directories.  If it's a file a download thread is spawned.  If it's
+a directory it crawls into it and repeats the process.
+
+If on Windows script expects the Wget exe to be in the same directory or in util.
+
+The module expects a raw directory listing of the URL. It will not work if there is a default HTML page at the URL.
+"""
 class ThreadedWget():
 
     def __init__(self, dl_url, output_dir, cutdirs=0, threads=15, mirror=False, verbose=False, no_parent=False,
@@ -105,8 +115,9 @@ class ThreadedWget():
 
     def parse_remote_dir_tree(self, url, dir, path='', previous=None):
         """
-        Crawl a directory listing of a URL and find all files.  Pass each file off to a download function.
-        Builds up seperate list of files and files on each directory level
+        Crawl a directory listing of a URL and find all files.  Each call of the function builds a
+        list of all files and directories at the current level.  It then calls _threaded_download()
+        for each file.  It then calls itself again for each directory.
         :param url: The URL to parse. Starts with base url and recursivly calls deeper URL
         :param dir: Current dir at time of calling function. Used to build of new URL
         :param path: Builds of the path of folders crawled into.  Used to build of URL
@@ -125,7 +136,7 @@ class ThreadedWget():
         else:
             path = path + '/' + dir
 
-        # TODO Cleanup Exception Handling.  Will throw urllib.error.URLError if DNS lookup fails
+        # TODO This is failing on Linux for some dumb reason.
         try:
             response = urllib.request.urlopen(url)
         except (urllib.error.HTTPError, urllib.error.URLError) as e:
@@ -241,7 +252,6 @@ def main():
                                                  "and download all files. ")
 
     parser.add_argument("dl_url", help="This is the URL to download")
-    #parser.add_argument("output_dir", help="The directory to place the downloaded files")
     parser.add_argument("--output", default=False, dest="output_dir")
     parser.add_argument("cutdirs", help="Passthrough for Wget's custdirs command line flag")
     parser.add_argument("--threads", default=15, dest="threads", help="The number of download threads to run at once.")
